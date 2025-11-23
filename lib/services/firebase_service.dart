@@ -133,14 +133,6 @@ class FirebaseService {
           .collection(AppConstants.roomsCollection)
           .add(room.toMap());
       
-      // Update hostel total seats
-      final hostel = await getHostelById(hostelId);
-      if (hostel != null) {
-        await updateHostel(hostelId, {
-          'totalSeats': hostel.totalSeats + room.totalSeats,
-        });
-      }
-      
       return docRef.id;
     } catch (e) {
       throw app_error.AppFirebaseException('Error adding room: $e');
@@ -170,18 +162,7 @@ class FirebaseService {
           .get();
       
       if (roomDoc.exists) {
-        final room = Room.fromMap(roomId, roomDoc.data()!);
-        
-        // Delete room
         await roomDoc.reference.delete();
-        
-        // Update hostel total seats
-        final hostel = await getHostelById(hostelId);
-        if (hostel != null) {
-          await updateHostel(hostelId, {
-            'totalSeats': hostel.totalSeats - room.totalSeats,
-          });
-        }
       }
     } catch (e) {
       throw app_error.AppFirebaseException('Error deleting room: $e');

@@ -168,9 +168,17 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         photoUrls.addAll(uploadedUrls);
       }
 
-      // Calculate total seats
+      // Calculate stats
       final totalSeats = _rooms.fold<int>(0, (sum, room) => sum + room.totalSeats);
       final bookedSeats = _rooms.fold<int>(0, (sum, room) => sum + (room.totalSeats - room.availableSeats));
+      
+      double minRent = 0.0;
+      double maxRent = 0.0;
+      
+      if (_rooms.isNotEmpty) {
+        minRent = _rooms.map((r) => r.rentPerSeat).reduce((a, b) => a < b ? a : b);
+        maxRent = _rooms.map((r) => r.rentPerSeat).reduce((a, b) => a > b ? a : b);
+      }
 
       final authService = Provider.of<AuthService>(context, listen: false);
       final currentUserId = authService.currentUser?.uid ?? '';
@@ -196,6 +204,8 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
         rules: _rulesController.text.trim().isEmpty
             ? null
             : _rulesController.text.trim(),
+        minRent: minRent,
+        maxRent: maxRent,
       );
 
       if (widget.hostel == null) {

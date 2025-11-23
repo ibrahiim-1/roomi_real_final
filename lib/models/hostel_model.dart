@@ -19,6 +19,8 @@ class Hostel {
   final String createdBy;
   final String? description;
   final String? rules;
+  final double minRent;
+  final double maxRent;
 
   Hostel({
     required this.id,
@@ -39,6 +41,8 @@ class Hostel {
     required this.createdBy,
     this.description,
     this.rules,
+    this.minRent = 0.0,
+    this.maxRent = 0.0,
   });
 
   // Convert to Firestore document
@@ -61,6 +65,8 @@ class Hostel {
       'createdBy': createdBy,
       'description': description,
       'rules': rules,
+      'minRent': minRent,
+      'maxRent': maxRent,
     };
   }
 
@@ -85,12 +91,10 @@ class Hostel {
       createdBy: map['createdBy'] ?? '',
       description: map['description'],
       rules: map['rules'],
+      minRent: (map['minRent'] ?? 0.0).toDouble(),
+      maxRent: (map['maxRent'] ?? 0.0).toDouble(),
     );
   }
-
-  // Get minimum rent from rooms
-  double get minRent => 0.0; // Will be calculated from rooms
-  double get maxRent => 0.0; // Will be calculated from rooms
 
   Hostel copyWith({
     String? id,
@@ -111,6 +115,8 @@ class Hostel {
     String? createdBy,
     String? description,
     String? rules,
+    double? minRent,
+    double? maxRent,
   }) {
     return Hostel(
       id: id ?? this.id,
@@ -131,6 +137,8 @@ class Hostel {
       createdBy: createdBy ?? this.createdBy,
       description: description ?? this.description,
       rules: rules ?? this.rules,
+      minRent: minRent ?? this.minRent,
+      maxRent: maxRent ?? this.maxRent,
     );
   }
 }
