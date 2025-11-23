@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "354066022742",
+    "project_id": "roomi-app-46372",
+    "storage_bucket": "roomi-app-46372.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:354066022742:android:93b375140a2d73bb9cd6f7",
+        "android_client_info": {
+          "package_name": "com.example.roomi_real_final"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA1VKeJ1Hs9ekxXShuDhtu3ikVptPcrhPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
