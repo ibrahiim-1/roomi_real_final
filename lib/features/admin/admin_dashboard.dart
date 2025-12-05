@@ -11,6 +11,50 @@ import '../hostel_detail/hostel_detail_screen.dart';
 class AdminDashboard extends StatelessWidget {
   const AdminDashboard({super.key});
 
+  Future<bool> _showLogoutConfirmation(BuildContext context) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Logout Confirmation'),
+        content: const Text('Are you sure you want to log out?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('No'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+            ),
+            child: const Text('Yes, Logout'),
+          ),
+        ],
+      ),
+    );
+    return result ?? false;
+  }
+
+  Future<void> _handleLogout(BuildContext context) async {
+    final shouldLogout = await _showLogoutConfirmation(context);
+    
+    if (shouldLogout && context.mounted) {
+      final authService = Provider.of<AuthService>(context, listen: false);
+      try {
+        await authService.signOut();
+        if (context.mounted) {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Error: $e')),
+          );
+        }
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final authService = Provider.of<AuthService>(context);
@@ -23,165 +67,177 @@ class AdminDashboard extends StatelessWidget {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Admin Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              try {
-                await authService.signOut();
-                if (context.mounted) {
-                  Navigator.of(context).popUntil((route) => route.isFirst);
-                }
-              } catch (e) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Error: $e')),
-                  );
-                }
-              }
-            },
-          ),
-        ],
-      ),
-      body: StreamBuilder<List<Hostel>>(
-        stream: firebaseService.getHostelsByAdmin(currentUser.uid),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const LoadingWidget(message: 'Loading hostels...');
+    return WillPopScope(
+      onWillPop: () async {
+        final shouldLogout = await _showLogoutConfirmation(context);
+        if (shouldLogout && context.mounted) {
+          final authService = Provider.of<AuthService>(context, listen: false);
+          try {
+            await authService.signOut();
+            return true; // Allow back navigation
+          } catch (e) {
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Error: $e')),
+              );
+            }
+            return false;
           }
+        }
+        return false; // Don't allow back navigation if user cancels
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Admin Dashboard'),
+          automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.logout),
+              onPressed: () => _handleLogout(context),
+              tooltip: 'Logout',
+            ),
+          ],
+        ),
+        body: StreamBuilder<List<Hostel>>(
+          stream: firebaseService.getHostelsByAdmin(currentUser.uid),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const LoadingWidget(message: 'Loading hostels...');
+            }
 
-          if (snapshot.hasError) {
-            return ErrorDisplayWidget(message: snapshot.error.toString());
-          }
+            if (snapshot.hasError) {
+              return ErrorDisplayWidget(message: snapshot.error.toString());
+            }
 
-          final hostels = snapshot.data ?? [];
+            final hostels = snapshot.data ?? [];
 
-          if (hostels.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.home, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  Text(
-                    'No hostels yet',
-                    style: TextStyle(
-                      fontSize: 18,
-                      color: Colors.grey[600],
+            if (hostels.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.home, size: 64, color: Colors.grey[400]),
+                    const SizedBox(height: 16),
+                    Text(
+                      'No hostels yet',
+                      style: TextStyle(
+                        fontSize: 18,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Tap the + button to add your first hostel',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[500],
+                    const SizedBox(height: 8),
+                    Text(
+                      'Tap the + button to add your first hostel',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[500],
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: hostels.length,
-            itemBuilder: (context, index) {
-              final hostel = hostels[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: hostel.photoUrls.isNotEmpty
-                      ? CircleAvatar(
-                          backgroundImage: NetworkImage(hostel.photoUrls[0]),
-                        )
-                      : const CircleAvatar(
-                          child: Icon(Icons.home),
-                        ),
-                  title: Text(hostel.name),
-                  subtitle: Text(hostel.address),
-                  trailing: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.edit),
-                        onPressed: () {
-                          Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => AddHostelScreen(hostel: hostel),
-                            ),
-                          );
-                        },
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.delete, color: Colors.red),
-                        onPressed: () async {
-                          final confirm = await showDialog<bool>(
-                            context: context,
-                            builder: (context) => AlertDialog(
-                              title: const Text('Delete Hostel'),
-                              content: Text('Are you sure you want to delete ${hostel.name}?'),
-                              actions: [
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, false),
-                                  child: const Text('Cancel'),
-                                ),
-                                TextButton(
-                                  onPressed: () => Navigator.pop(context, true),
-                                  style: TextButton.styleFrom(
-                                    foregroundColor: Colors.red,
-                                  ),
-                                  child: const Text('Delete'),
-                                ),
-                              ],
-                            ),
-                          );
-
-                          if (confirm == true) {
-                            try {
-                              await firebaseService.deleteHostel(hostel.id);
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Hostel deleted')),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Error: $e')),
-                                );
-                              }
-                            }
-                          }
-                        },
-                      ),
-                    ],
-                  ),
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => HostelDetailScreen(hostelId: hostel.id),
-                      ),
-                    );
-                  },
+                  ],
                 ),
               );
-            },
-          );
-        },
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const AddHostelScreen(),
-            ),
-          );
-        },
-        child: const Icon(Icons.add),
+            }
+
+            return ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: hostels.length,
+              itemBuilder: (context, index) {
+                final hostel = hostels[index];
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  child: ListTile(
+                    leading: hostel.photoUrls.isNotEmpty
+                        ? CircleAvatar(
+                            backgroundImage: NetworkImage(hostel.photoUrls[0]),
+                          )
+                        : const CircleAvatar(
+                            child: Icon(Icons.home),
+                          ),
+                    title: Text(hostel.name),
+                    subtitle: Text(hostel.address),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit),
+                          onPressed: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(
+                                builder: (_) => AddHostelScreen(hostel: hostel),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text('Delete Hostel'),
+                                content: Text('Are you sure you want to delete ${hostel.name}?'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    style: TextButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                    ),
+                                    child: const Text('Delete'),
+                                  ),
+                                ],
+                              ),
+                            );
+
+                            if (confirm == true) {
+                              try {
+                                await firebaseService.deleteHostel(hostel.id);
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Hostel deleted')),
+                                  );
+                                }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e')),
+                                  );
+                                }
+                              }
+                            }
+                          },
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => HostelDetailScreen(
+                            hostelId: hostel.id,
+                            isAdminView: true,
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                );
+              },
+            );
+          },
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const AddHostelScreen(),
+              ),
+            );
+          },
+          child: const Icon(Icons.add),
+        ),
       ),
     );
   }

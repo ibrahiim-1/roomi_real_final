@@ -14,8 +14,13 @@ import '../reviews/review_list.dart';
 
 class HostelDetailScreen extends StatefulWidget {
   final String hostelId;
+  final bool isAdminView;
 
-  const HostelDetailScreen({super.key, required this.hostelId});
+  const HostelDetailScreen({
+    super.key, 
+    required this.hostelId,
+    this.isAdminView = false,
+  });
 
   @override
   State<HostelDetailScreen> createState() => _HostelDetailScreenState();
@@ -349,15 +354,20 @@ class _HostelDetailScreenState extends State<HostelDetailScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 16),
-                                SizedBox(
-                                  width: double.infinity,
-                                  child: ElevatedButton.icon(
-                                    onPressed: _showReviewDialog,
-                                    icon: const Icon(Icons.rate_review),
-                                    label: const Text('Write a Review'),
+                                // Only show review button for non-admin users
+                                if (!widget.isAdminView) ...[
+                                  SizedBox(
+                                    width: double.infinity,
+                                    child: ElevatedButton.icon(
+                                      onPressed: _showReviewDialog,
+                                      icon: const Icon(Icons.rate_review),
+                                      label: const Text('Write a Review'),
+                                    ),
                                   ),
-                                ),
-                                const SizedBox(height: 24),
+                                  const SizedBox(height: 24),
+                                ],
+                                if (widget.isAdminView)
+                                  const SizedBox(height: 24),
                                 // Reviews Section
                                 const Text(
                                   'Reviews & Ratings',
