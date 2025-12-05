@@ -82,51 +82,77 @@ class _ReviewDialogState extends State<ReviewDialog> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      child: SingleChildScrollView(
-        child: Padding(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
             key: _formKey,
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                const Text(
-                  'Write a Review',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Write a Review',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.close),
+                      onPressed: () => Navigator.of(context).pop(),
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(),
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 24),
                 // Rating
-                Center(
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: List.generate(5, (index) {
-                      return IconButton(
-                        onPressed: () {
-                          setState(() {
-                            _rating = index + 1.0;
-                          });
-                        },
-                        icon: Icon(
-                          index < _rating ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                          size: 40,
-                        ),
-                      );
-                    }),
-                  ),
+                const Text(
+                  'Rate your experience',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.grey),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: List.generate(5, (index) {
+                    return IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _rating = index + 1.0;
+                        });
+                      },
+                      icon: Icon(
+                        index < _rating ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 32,
+                      ),
+                      padding: const EdgeInsets.all(4),
+                      constraints: const BoxConstraints(),
+                    );
+                  }),
                 ),
                 const SizedBox(height: 24),
                 // Name
                 TextFormField(
                   controller: _nameController,
-                  decoration: const InputDecoration(
-                    labelText: 'Your Name *',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Your Name',
+                    hintText: 'Enter your full name',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.person_outline),
+                    filled: true,
+                    fillColor: Colors.grey[50],
                   ),
+                  textCapitalization: TextCapitalization.words,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your name';
@@ -138,9 +164,15 @@ class _ReviewDialogState extends State<ReviewDialog> {
                 // Phone (optional)
                 TextFormField(
                   controller: _phoneController,
-                  decoration: const InputDecoration(
-                    labelText: 'Phone (Optional)',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Phone Number (Optional)',
+                    hintText: 'For verification purposes',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    prefixIcon: const Icon(Icons.phone_outlined),
+                    filled: true,
+                    fillColor: Colors.grey[50],
                   ),
                   keyboardType: TextInputType.phone,
                 ),
@@ -148,11 +180,17 @@ class _ReviewDialogState extends State<ReviewDialog> {
                 // Comment
                 TextFormField(
                   controller: _commentController,
-                  decoration: const InputDecoration(
-                    labelText: 'Your Review *',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: 'Your Review',
+                    hintText: 'Share your experience with others...',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignLabelWithHint: true,
+                    filled: true,
+                    fillColor: Colors.grey[50],
                   ),
-                  maxLines: 5,
+                  maxLines: 4,
                   maxLength: 500,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -162,28 +200,31 @@ class _ReviewDialogState extends State<ReviewDialog> {
                   },
                 ),
                 const SizedBox(height: 24),
-                // Buttons
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    TextButton(
-                      onPressed: _isSubmitting
-                          ? null
-                          : () => Navigator.of(context).pop(),
-                      child: const Text('Cancel'),
+                // Submit Button
+                SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _isSubmitting ? null : _submitReview,
+                    style: ElevatedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      elevation: 0,
                     ),
-                    const SizedBox(width: 12),
-                    ElevatedButton(
-                      onPressed: _isSubmitting ? null : _submitReview,
-                      child: _isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Text('Submit'),
-                    ),
-                  ],
+                    child: _isSubmitting
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text(
+                            'Submit Review',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ),
               ],
             ),
