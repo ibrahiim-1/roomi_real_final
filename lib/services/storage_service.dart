@@ -7,13 +7,13 @@ class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   // Upload hostel image
-  Future<String> uploadHostelImage(File imageFile, String hostelId, int index) async {
+  Future<String> uploadHostelImage(File imageFile, String hostelId, String fileName) async {
     try {
       final ref = _storage
           .ref()
           .child(AppConstants.hostelImagesPath)
           .child(hostelId)
-          .child('image_$index.jpg');
+          .child(fileName);
 
       await ref.putFile(imageFile);
       return await ref.getDownloadURL();
@@ -29,8 +29,9 @@ class StorageService {
   ) async {
     try {
       final List<String> urls = [];
-      for (int i = 0; i < imageFiles.length; i++) {
-        final url = await uploadHostelImage(imageFiles[i], hostelId, i);
+      for (var imageFile in imageFiles) {
+        final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+        final url = await uploadHostelImage(imageFile, hostelId, fileName);
         urls.add(url);
       }
       return urls;

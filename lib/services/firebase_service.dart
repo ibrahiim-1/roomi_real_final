@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/hostel_model.dart';
 import '../models/room_model.dart';
 import '../models/review_model.dart';
+import 'storage_service.dart';
 import '../core/constants.dart';
 import '../core/error.dart' as app_error;
 
@@ -47,10 +48,11 @@ class FirebaseService {
 
   Future<String> addHostel(Hostel hostel) async {
     try {
-      final docRef = await _firestore
+      await _firestore
           .collection(AppConstants.hostelsCollection)
-          .add(hostel.toMap());
-      return docRef.id;
+          .doc(hostel.id)
+          .set(hostel.toMap());
+      return hostel.id;
     } catch (e) {
       throw app_error.AppFirebaseException('Error adding hostel: $e');
     }
@@ -69,6 +71,10 @@ class FirebaseService {
 
   Future<void> deleteHostel(String hostelId) async {
     try {
+      // Delete images from Storage
+      final storageService = StorageService();
+      await storageService.deleteHostelImages(hostelId);
+
       // Delete all rooms
       final roomsSnapshot = await _firestore
           .collection(AppConstants.hostelsCollection)

@@ -156,7 +156,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
     });
 
     try {
-      String hostelId = widget.hostel?.id ?? '';
+      String hostelId = widget.hostel?.id ?? const Uuid().v4();
       List<String> photoUrls = List.from(_existingImageUrls);
 
       // Upload new images
@@ -210,8 +210,7 @@ class _AddHostelScreenState extends State<AddHostelScreen> {
 
       if (widget.hostel == null) {
         // Create new hostel
-        final newHostelId = await _firebaseService.addHostel(hostel);
-        hostelId = newHostelId;
+        await _firebaseService.addHostel(hostel);
       } else {
         // Update existing hostel
         await _firebaseService.updateHostel(hostelId, hostel.toMap());
